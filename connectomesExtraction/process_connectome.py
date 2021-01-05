@@ -1,10 +1,14 @@
+import os
+import ast
 import pandas as pd
 import numpy as np
+import process_bids as pb
 
-from nilearn import connectome
 from nilearn import image
+from nilearn import signal
+from nilearn import connectome
 
-
+#%%
 def create_empty_df_timesseries(sessions_sub, tasks_by_session_sub, run_by_task_sub, index):
     list_tuple = []
 
@@ -41,3 +45,48 @@ def create_empty_df_timesseries(sessions_sub, tasks_by_session_sub, run_by_task_
 
     time_series_df = pd.DataFrame(columns=column, index=index)
     return time_series_df
+
+#%%
+
+def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_path, time_series_df,
+                         subject_confounds_list = None, confounds_name = None):
+
+    for i, image_path in enumerate(subjects_im_path):
+        image_caract = pb.get_entities(image_path, run_by_task_sub)
+        image_koi = pb.get_keys_of_interest(image_caract)
+
+        im = image.load_img(image_path)
+        time_series = atlas_masker.fit_transform(im, confounds=None)
+        time_series_df.loc['None',image_koi] = time_series.tolist()
+
+        for j, confounds in enumerate(subject_confounds_list):
+            time_series_cleaned = signal.clean(time_series, confounds=confounds[i])
+            time_series_df.loc[confounds_name[j+1], image_koi] = time_series_cleaned.tolist()
+
+    time_series_df = time_series_df.replace(r'^\s*$', np.nan, regex=True) # to delete
+    if time_series_df.isnull().any().any():
+        time_series_df = time_series_df.dropna(axis='columns')
+
+    time_series_df.to_csv(csv_path, header=True)
+    return None
+
+#%%
+
+def extract_connectomes(time_series_info, directory, confounds_name):
+    for id in time_series_info.columns:
+        columns_level = ast.literal_eval(time_series_info.at['nlevels', id])
+        time_series_subject = pd.read_csv(time_series_info.at['path', id], header=list(range(columns_level)),
+                                          index_col=0)
+        time_series_subject = time_series_subject.applymap(lambda x: np.array(ast.literal_eval(x)))
+
+        for caract in time_series_subject.columns:
+            time_series_subject_caract = time_series_subject.loc[confounds_name, caract]
+            correlation_measure = connectome.ConnectivityMeasure(kind='correlation', vectorize=True,
+                                                                 discard_diagonal=True)
+            connectomes_matrix = correlation_measure.fit_transform(time_series_subject_caract)
+
+            for i, confound in enumerate(confounds_name):
+                connectome_folder_path = os.path.join(directory, confound)
+                connectome_csv_path = os.path.join(connectome_folder_path, '_'.join((id,) + caract) + '.csv')
+                np.savetxt(connectome_csv_path, connectomes_matrix[i], delimiter=',')
+    return
