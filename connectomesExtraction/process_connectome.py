@@ -72,7 +72,8 @@ def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_pa
 
 #%%
 
-def extract_connectomes(time_series_info, directory, confounds_name):
+def extract_connectomes(time_series_info, directory, confounds_name, kind='correlation', vectorize= True,
+                        discard_diagonal=True):
     for id in time_series_info.columns:
         columns_level = ast.literal_eval(time_series_info.at['nlevels', id])
         time_series_subject = pd.read_csv(time_series_info.at['path', id], header=list(range(columns_level)),
@@ -81,12 +82,12 @@ def extract_connectomes(time_series_info, directory, confounds_name):
 
         for caract in time_series_subject.columns:
             time_series_subject_caract = time_series_subject.loc[confounds_name, caract]
-            correlation_measure = connectome.ConnectivityMeasure(kind='correlation', vectorize=True,
-                                                                 discard_diagonal=True)
+            correlation_measure = connectome.ConnectivityMeasure(kind=kind, vectorize=vectorize,
+                                                                 discard_diagonal=discard_diagonal)
             connectomes_matrix = correlation_measure.fit_transform(time_series_subject_caract)
 
             for i, confound in enumerate(confounds_name):
                 connectome_folder_path = os.path.join(directory, confound)
                 connectome_csv_path = os.path.join(connectome_folder_path, '_'.join((id,) + caract) + '.csv')
-                np.savetxt(connectome_csv_path, connectomes_matrix[i], delimiter=',')
+                pd.DataFrame(connectomes_matrix[i]).to_csv(connectome_csv_path)
     return
