@@ -89,5 +89,5 @@ def extract_connectomes(time_series_info, directory, confounds_name, kind='corre
             for i, confound in enumerate(confounds_name):
                 connectome_folder_path = os.path.join(directory, confound)
                 connectome_csv_path = os.path.join(connectome_folder_path, '_'.join((id,) + caract) + '.csv')
-                pd.DataFrame(connectomes_matrix[i]).to_csv(connectome_csv_path)
+                pd.DataFrame(connectomes_matrix[i]).to_csv(connectome_csv_path, index=False)
     return
