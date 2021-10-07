@@ -60,7 +60,8 @@ def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_pa
         time_series_df.loc['None',image_koi] = time_series.tolist()
 
         for j, confounds in enumerate(subject_confounds_list):
-            time_series_cleaned = signal.clean(time_series, confounds=confounds[i])
+            time_series_cleaned = signal.clean(time_series, confounds=confounds[i],
+                                               detrend=False, standardize='zscore', t_r=2)
             time_series_df.loc[confounds_name[j+1], image_koi] = time_series_cleaned.tolist()
 
     time_series_df = time_series_df.replace(r'^\s*$', np.nan, regex=True) # to delete
