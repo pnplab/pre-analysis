@@ -48,7 +48,7 @@ def create_empty_df_timesseries(sessions_sub, tasks_by_session_sub, run_by_task_
 
 #%%
 
-def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_path, time_series_df,
+def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_path, time_series_df, t_r,
                          subject_confounds_list = None, confounds_name = None):
 
     for i, image_path in enumerate(subjects_im_path):
@@ -61,7 +61,7 @@ def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_pa
 
         for j, confounds in enumerate(subject_confounds_list):
             time_series_cleaned = signal.clean(time_series, confounds=confounds[i],
-                                               detrend=False, standardize='zscore', t_r=2)
+                                               detrend=False, standardize='zscore', t_r=t_r)
             time_series_df.loc[confounds_name[j+1], image_koi] = time_series_cleaned.tolist()
 
     time_series_df = time_series_df.replace(r'^\s*$', np.nan, regex=True) # to delete
