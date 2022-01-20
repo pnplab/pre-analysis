@@ -49,7 +49,7 @@ def create_empty_df_timesseries(sessions_sub, tasks_by_session_sub, run_by_task_
 #%%
 
 def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_path, time_series_df, t_r,
-                         subject_confounds_list = None, confounds_name = None):
+                         confounds_algorithm_name, loaded_confounds):
 
     for i, image_path in enumerate(subjects_im_path):
         image_caract = pb.get_entities(image_path, run_by_task_sub)
@@ -59,10 +59,9 @@ def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_pa
         time_series = atlas_masker.fit_transform(im, confounds=None)
         time_series_df.loc['None',image_koi] = time_series.tolist()
 
-        for j, confounds in enumerate(subject_confounds_list):
-            time_series_cleaned = signal.clean(time_series, confounds=confounds[i],
-                                               detrend=False, standardize='zscore', t_r=t_r)
-            time_series_df.loc[confounds_name[j+1], image_koi] = time_series_cleaned.tolist()
+        time_series_cleaned = signal.clean(time_series, confounds=loaded_confounds,
+                                            detrend=False, standardize='zscore', t_r=t_r)
+        time_series_df.loc[confounds_algorithm_name, image_koi] = time_series_cleaned.tolist()
 
     time_series_df = time_series_df.replace(r'^\s*$', np.nan, regex=True) # to delete
     if time_series_df.isnull().any().any():
@@ -73,22 +72,21 @@ def calculate_timeseries(atlas_masker, run_by_task_sub, subjects_im_path, csv_pa
 
 #%%
 
-def extract_connectomes(time_series_info, directory, confounds_name, kind='correlation', vectorize= True,
+def extract_connectomes(time_series_info, output_csv_path, confound_name, kind='correlation', vectorize= True,
                         discard_diagonal=True):
-    for id in time_series_info.columns:
-        columns_level = ast.literal_eval(time_series_info.at['nlevels', id])
-        time_series_subject = pd.read_csv(time_series_info.at['path', id], header=list(range(columns_level)),
+    for sub_id in time_series_info.columns:
+        columns_level = ast.literal_eval(time_series_info.at['nlevels', sub_id])
+        time_series_subject = pd.read_csv(time_series_info.at['path', sub_id], header=list(range(columns_level)),
                                           index_col=0)
         time_series_subject = time_series_subject.applymap(lambda x: np.array(ast.literal_eval(x)))
 
         for caract in time_series_subject.columns:
-            time_series_subject_caract = time_series_subject.loc[confounds_name, caract]
+            time_series_subject_caract = time_series_subject.loc[confound_name, caract]
             correlation_measure = connectome.ConnectivityMeasure(kind=kind, vectorize=vectorize,
                                                                  discard_diagonal=discard_diagonal)
             connectomes_matrix = correlation_measure.fit_transform(time_series_subject_caract)
 
-            for i, confound in enumerate(confounds_name):
-                connectome_folder_path = os.path.join(directory, confound)
-                connectome_csv_path = os.path.join(connectome_folder_path, '_'.join((id,) + caract) + '.csv')
+                output_csv_path
+                connectome_csv_path = os.path.join(connectome_folder_path, '_'.join((sub_id,) + caract) + '.csv')
                 pd.DataFrame(connectomes_matrix[i]).to_csv(connectome_csv_path, index=False)
     return

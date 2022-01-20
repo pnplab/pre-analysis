@@ -1,0 +1,5 @@
+pandas
+numpy
+pybids
+nilearn
+load_confounds==v0.6.5
