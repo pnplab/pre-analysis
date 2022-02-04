@@ -1,4 +1,0 @@
-,MSC01,MSC02,MSC03,MSC04,MSC05,MSC06,MSC07,MSC08,MSC09,MSC10
-path,timeSeries_files\MSC01_CAB-NP_timeSeries.csv,timeSeries_files\MSC02_CAB-NP_timeSeries.csv,timeSeries_files\MSC03_CAB-NP_timeSeries.csv,timeSeries_files\MSC04_CAB-NP_timeSeries.csv,timeSeries_files\MSC05_CAB-NP_timeSeries.csv,timeSeries_files\MSC06_CAB-NP_timeSeries.csv,timeSeries_files\MSC07_CAB-NP_timeSeries.csv,timeSeries_files\MSC08_CAB-NP_timeSeries.csv,timeSeries_files\MSC09_CAB-NP_timeSeries.csv,timeSeries_files\MSC10_CAB-NP_timeSeries.csv
-nlevels,3,3,3,3,3,3,3,3,3,3
-atlas,CAB-NP,CAB-NP,CAB-NP,CAB-NP,CAB-NP,CAB-NP,CAB-NP,CAB-NP,CAB-NP,CAB-NP
